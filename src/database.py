@@ -287,6 +287,46 @@ class TradingDatabase:
         cursor.execute(f"UPDATE trades SET {', '.join(updates)} WHERE id = ?", params)
         self.conn.commit()
 
+    def update_trade(self, trade: 'TradeRecord'):
+        """Update trade record with full object"""
+        self.update_trade_status(
+            trade_id=trade.id,
+            status=trade.status,
+            exit_price=trade.exit_price,
+            pnl=trade.pnl,
+            pnl_percent=trade.pnl_percent,
+            close_reason=trade.close_reason,
+            duration=trade.duration
+        )
+
+    async def store_trade_analysis(self, analysis) -> int:
+        """Store trade analysis for learning"""
+        # For now, store as JSON in decisions table with special marker
+        # In production, create dedicated trade_analysis table
+        import json
+        cursor = self.conn.cursor()
+        cursor.execute(
+            """INSERT INTO decisions
+               (timestamp, market_state, ai_output, risk_approved)
+               VALUES (?, ?, ?, ?)""",
+            (
+                analysis.timestamp,
+                json.dumps({"type": "trade_analysis", "trade_id": analysis.trade_id}),
+                json.dumps({
+                    "outcome": analysis.outcome,
+                    "analysis": analysis.analysis,
+                    "key_takeaways": analysis.key_takeaways,
+                    "what_worked": analysis.what_worked,
+                    "what_didnt_work": analysis.what_didnt_work,
+                    "recommendations": analysis.recommendations,
+                    "emotional_factors": analysis.emotional_factors
+                }),
+                True
+            )
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+
     def close(self):
         """Close database connection"""
         self.conn.close()

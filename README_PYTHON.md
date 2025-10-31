@@ -78,18 +78,27 @@ python -m src.main
 
 ```
 src/
-├── __init__.py              # Package initialization
-├── types.py                 # Type definitions (Pydantic models)
-├── config.py                # Configuration loader
-├── database.py              # SQLite database layer
-├── exchange_client.py       # OKX exchange client (CCXT)
-├── indicators.py            # Technical indicators calculator
-├── ai_provider.py           # Anthropic AI provider
-├── risk_manager.py          # Risk management system
-├── orchestrator.py          # Main trading orchestrator
-├── prompts.py               # System prompts
-└── main.py                  # Entry point
+├── __init__.py                  # Package initialization
+├── types.py                     # Type definitions (Pydantic models)
+├── config.py                    # Configuration loader
+├── database.py                  # SQLite database layer
+├── exchange_client.py           # OKX exchange client (CCXT)
+├── indicators.py                # Technical indicators calculator
+├── ai_provider.py               # Base Anthropic AI provider
+├── ai_provider_enhanced.py      # ✨ Enhanced AI with memory integration
+├── risk_manager.py              # Risk management system
+├── orchestrator.py              # Base trading orchestrator
+├── orchestrator_enhanced.py     # ✨ Enhanced orchestrator with learning
+├── memory_system.py             # ✨ Dual-layer memory system
+├── post_trade_analysis.py       # ✨ Trade analysis and learning
+├── dynamic_prompt.py            # ✨ Dynamic prompt evolution
+├── backtesting.py               # ✨ LLM-powered backtesting engine
+├── pattern_recognition.py       # ✨ LLM pattern discovery
+├── prompts.py                   # System prompts
+└── main.py                      # Entry point
 ```
+
+✨ = New advanced features
 
 ## 🔑 Key Features
 
@@ -316,16 +325,170 @@ grep ERROR logs/trading.log
 grep "AI decision generated" logs/trading.log | wc -l
 ```
 
+## ✅ Advanced Features (Implemented)
+
+The Python version now includes all advanced continuity and learning features:
+
+### Memory & Learning System
+- **Dual-layer Memory**: Short-term (recent trades) and long-term (lessons, patterns, personality)
+- **Personality Traits**: AI develops trading personality based on history (risk tolerance, patience, confidence)
+- **Post-Trade Analysis**: Automatic analysis of every completed trade to extract learnings
+- **Lesson Storage**: Insights stored and recalled in future decisions
+
+### Dynamic AI Evolution
+- **Evolving Prompts**: AI prompts adapt based on performance (normal/crisis/fresh modes)
+- **Crisis Mode**: Activates during drawdowns with defensive parameters
+- **Fresh Perspective Mode**: Resets biases during prolonged underperformance
+- **Self-Reflection**: AI required to reflect on emotional state in every decision
+
+### LLM-Powered Backtesting
+- **AI-Driven Backtesting**: Uses actual AI to make decisions on historical data
+- **Insight Generation**: LLM analyzes backtest results and suggests improvements
+- **Strategy Validation**: Test strategies before live deployment
+
+### Pattern Recognition
+- **LLM Pattern Discovery**: AI identifies winning/losing patterns from trade history
+- **Mistake Analysis**: Categorizes common errors (entry, exit, risk, psychological)
+- **Market Regime Detection**: AI classifies current market conditions
+- **Strategy Improvement**: Generates actionable suggestions to improve performance
+
+## 📖 Using Advanced Features
+
+### Running with Enhanced Orchestrator
+
+```python
+from src.config import get_config
+from src.database import init_database
+from src.exchange_client import OKXClient
+from src.ai_provider_enhanced import EnhancedAnthropicProvider
+from src.risk_manager import RiskManager
+from src.orchestrator_enhanced import EnhancedTradingOrchestrator
+from src.prompts import get_system_prompt
+
+# Initialize components
+config = get_config()
+database = init_database(config.database.path)
+exchange = OKXClient(config.exchange)
+ai_provider = EnhancedAnthropicProvider(config.ai, database)
+risk_manager = RiskManager(config.risk, database)
+
+# Create enhanced orchestrator
+orchestrator = EnhancedTradingOrchestrator(
+    config=config,
+    exchange=exchange,
+    ai_provider=ai_provider,
+    risk_manager=risk_manager,
+    database=database,
+    system_prompt=get_system_prompt()
+)
+
+# Start trading with full memory and learning
+await orchestrator.start()
+```
+
+### Running Backtests
+
+```python
+from src.backtesting import LLMBacktester
+from datetime import datetime, timedelta
+
+# Initialize backtester
+backtester = LLMBacktester(
+    config=config,
+    ai_provider=ai_provider,
+    risk_manager=risk_manager,
+    database=database
+)
+
+# Load historical data (implement your data source)
+historical_data = {
+    'BTC-USDT-SWAP': btc_dataframe,
+    'ETH-USDT-SWAP': eth_dataframe
+}
+
+# Run backtest
+result = await backtester.run_backtest(
+    historical_data=historical_data,
+    start_date=datetime.now() - timedelta(days=30),
+    end_date=datetime.now(),
+    initial_capital=10000.0
+)
+
+# View results
+print(f"Total P&L: ${result.performance.total_pnl:+.2f}")
+print(f"Win Rate: {result.performance.win_rate:.1f}%")
+print(f"Sharpe Ratio: {result.performance.sharpe_ratio:.2f}")
+print("\nAI Insights:")
+print(result.ai_insights)
+```
+
+### Discovering Patterns
+
+```python
+from src.pattern_recognition import discover_trading_edges
+
+# Run comprehensive pattern discovery
+insights = await discover_trading_edges(
+    database=database,
+    ai_config=config.ai
+)
+
+# View discovered patterns
+print(f"Patterns found: {len(insights['patterns'])}")
+for pattern in insights['patterns']:
+    print(f"- {pattern.pattern_type}: {pattern.description}")
+
+# View common mistakes
+if insights['common_mistakes']:
+    print("\nCommon Mistakes:")
+    for category, mistakes in insights['common_mistakes'].items():
+        print(f"\n{category}:")
+        for mistake in mistakes:
+            print(f"  - {mistake}")
+
+# View improvement suggestions
+print("\nSuggested Improvements:")
+for suggestion in insights['improvement_suggestions']:
+    print(f"  - {suggestion}")
+```
+
+### Analyzing Post-Trade
+
+```python
+from src.post_trade_analysis import PostTradeAnalyzer
+
+analyzer = PostTradeAnalyzer(database)
+
+# Analyze a completed trade
+trade = database.get_trades(limit=1)[0]
+analysis = analyzer.analyze_trade(trade)
+
+print(f"Outcome: {analysis.outcome}")
+print(f"\nKey Takeaways:")
+for takeaway in analysis.key_takeaways:
+    print(f"  - {takeaway}")
+
+print(f"\nWhat Worked:")
+for item in analysis.what_worked:
+    print(f"  ✓ {item}")
+
+print(f"\nWhat Didn't Work:")
+for item in analysis.what_didnt_work:
+    print(f"  ✗ {item}")
+
+print(f"\nRecommendations:")
+for rec in analysis.recommendations:
+    print(f"  → {rec}")
+```
+
 ## 🔮 Future Enhancements
 
-- [ ] Memory system (port from TypeScript version)
-- [ ] Post-trade analysis
-- [ ] Multi-agent competition
-- [ ] Backtesting engine
+- [ ] Multi-agent competition (multiple AI strategies competing)
 - [ ] Web dashboard (FastAPI + React)
-- [ ] Machine learning integration (scikit-learn)
 - [ ] Additional exchanges (Binance, Coinbase)
 - [ ] Real-time monitoring with Prometheus/Grafana
+- [ ] Advanced ML models for price prediction
+- [ ] Social sentiment analysis
 
 ## 🤝 Contributing
 
