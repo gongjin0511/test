@@ -373,3 +373,35 @@ class AIProviderError(TradingError):
     """AI provider error"""
     def __init__(self, message: str, details: Any = None):
         super().__init__(message, 'AI_PROVIDER_ERROR', details)
+
+
+# ==================== News and Sentiment Types ====================
+
+class NewsItem(BaseModel):
+    """新闻条目"""
+    title: str
+    summary: str
+    source: str
+    url: str
+    timestamp: int  # Unix timestamp in milliseconds
+    content: str
+    sentiment: Optional[str] = None  # bullish, bearish, neutral
+    relevance_score: Optional[float] = None
+
+
+class MarketSentiment(BaseModel):
+    """市场情绪分析"""
+    symbol: str
+    timestamp: int
+    sentiment_score: float = Field(ge=-1.0, le=1.0)  # -1 (极度看空) to +1 (极度看涨)
+    sentiment_label: str  # extremely_bearish, bearish, neutral, bullish, extremely_bullish
+    confidence: float = Field(ge=0.0, le=1.0)
+    key_themes: List[str]
+    major_events: List[str]
+    price_impact: str  # short_term, medium_term, long_term
+    impact_magnitude: str  # negligible, minor, moderate, significant, major
+    trading_recommendation: str
+    risk_factors: List[str]
+    opportunities: List[str]
+    summary: str
+    news_count: int

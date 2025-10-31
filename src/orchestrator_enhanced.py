@@ -36,7 +36,8 @@ class EnhancedTradingOrchestrator(TradingOrchestrator):
         risk_manager: RiskManager,
         database: TradingDatabase,
         system_prompt: str,
-        logger: Optional[logging.Logger] = None
+        logger: Optional[logging.Logger] = None,
+        sentiment_aggregator: Optional[any] = None  # Optional sentiment aggregator
     ):
         # Initialize base orchestrator
         super().__init__(
@@ -51,6 +52,7 @@ class EnhancedTradingOrchestrator(TradingOrchestrator):
         self.logger = logger or logging.getLogger(__name__)
         self.session_start_time: Optional[int] = None
         self.trades_this_session: int = 0
+        self.sentiment_aggregator = sentiment_aggregator
 
         # Override ai_provider type for better type checking
         self.ai_provider: EnhancedAnthropicProvider = ai_provider
@@ -137,14 +139,24 @@ class EnhancedTradingOrchestrator(TradingOrchestrator):
             self.logger.info("📊 Collecting market data...")
             market_state = await self._collect_market_data()
 
+            # Step 1.5: Add news sentiment context if available
+            news_context = ""
+            if self.sentiment_aggregator:
+                news_context = await self._build_news_context(market_state)
+
             # Step 2: Generate AI decision (with enhanced provider)
-            self.logger.info("🧠 Generating AI decision with memory context...")
+            self.logger.info("🧠 Generating AI decision with memory and news context...")
             ai_start = time.time()
+
+            # Build enhanced prompt with news context
+            enhanced_prompt = self.system_prompt
+            if news_context:
+                enhanced_prompt = f"{self.system_prompt}\n\n{news_context}"
 
             # Enhanced provider automatically loads memory and selects prompt mode
             decision = await self.ai_provider.generate_trading_decision(
                 market_state=market_state,
-                base_prompt=self.system_prompt
+                base_prompt=enhanced_prompt
             )
 
             ai_time = int((time.time() - ai_start) * 1000)
@@ -405,3 +417,73 @@ class EnhancedTradingOrchestrator(TradingOrchestrator):
             positions=positions,
             performance_metrics=performance
         )
+
+    async def _build_news_context(self, market_state: MarketState) -> str:
+        """构建新闻和情绪上下文"""
+
+        if not self.sentiment_aggregator:
+            return ""
+
+        context = "\n# 📰 实时新闻和市场情绪\n\n"
+
+        try:
+            # 为每个交易对添加情绪信息
+            for symbol in self.config.trading.trading_pairs:
+                symbol_short = symbol.split('-')[0]
+
+                # 获取最新情绪
+                avg_sentiment = self.sentiment_aggregator.get_average_sentiment(symbol_short, hours=6)
+                trend = self.sentiment_aggregator.get_sentiment_trend(symbol_short, hours=6)
+
+                if trend == "insufficient_data":
+                    continue
+
+                # 获取历史记录中最新的详细情绪
+                if symbol_short in self.sentiment_aggregator.sentiment_history:
+                    recent_sentiments = self.sentiment_aggregator.sentiment_history[symbol_short]
+                    if recent_sentiments:
+                        latest = recent_sentiments[-1]
+
+                        context += f"## {symbol_short} 新闻情绪\n\n"
+
+                        # 情绪评分和趋势
+                        trend_emoji = {
+                            "improving": "📈 改善中",
+                            "declining": "📉 下降中",
+                            "stable": "➡️ 稳定"
+                        }
+
+                        context += f"**当前情绪**: {latest.sentiment_score:+.2f} ({latest.sentiment_label})\n"
+                        context += f"**6小时平均**: {avg_sentiment:+.2f}\n"
+                        context += f"**趋势**: {trend_emoji.get(trend, trend)}\n"
+                        context += f"**置信度**: {latest.confidence * 100:.0f}%\n\n"
+
+                        # 关键主题
+                        if latest.key_themes:
+                            context += f"**关键主题**: {', '.join(latest.key_themes[:3])}\n\n"
+
+                        # 重大事件
+                        if latest.major_events:
+                            context += f"**重大事件**:\n"
+                            for event in latest.major_events[:3]:
+                                context += f"- {event}\n"
+                            context += "\n"
+
+                        # 风险提示
+                        if latest.risk_factors:
+                            context += f"**⚠️ 风险因素**: {', '.join(latest.risk_factors[:2])}\n\n"
+
+                        # 机会
+                        if latest.opportunities:
+                            context += f"**✅ 交易机会**: {', '.join(latest.opportunities[:2])}\n\n"
+
+                        context += f"**情绪总结**: {latest.summary}\n\n"
+
+            context += "---\n\n"
+            context += "**重要提示**: 结合技术分析和新闻情绪做出决策。新闻情绪可能滞后或过度反应。\n"
+
+            return context
+
+        except Exception as e:
+            self.logger.error(f"Error building news context: {e}")
+            return ""

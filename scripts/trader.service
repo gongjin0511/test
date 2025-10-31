@@ -1,0 +1,44 @@
+# Systemd服务文件 - 将AI交易系统作为守护进程运行
+#
+# 安装方法:
+# 1. 编辑此文件，修改路径和用户名
+# 2. sudo cp scripts/trader.service /etc/systemd/system/
+# 3. sudo systemctl daemon-reload
+# 4. sudo systemctl enable trader
+# 5. sudo systemctl start trader
+#
+# 管理命令:
+# - 启动: sudo systemctl start trader
+# - 停止: sudo systemctl stop trader
+# - 重启: sudo systemctl restart trader
+# - 状态: sudo systemctl status trader
+# - 日志: sudo journalctl -u trader -f
+
+[Unit]
+Description=AI Crypto Trading System (OKX + Claude)
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+Group=YOUR_USERNAME
+WorkingDirectory=/path/to/your/project
+Environment="PATH=/path/to/your/project/venv/bin:/usr/bin"
+ExecStart=/path/to/your/project/venv/bin/python -m src.automated_trader
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/path/to/your/project/logs/trader.log
+StandardError=append:/path/to/your/project/logs/trader_error.log
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+
+# 资源限制
+LimitNOFILE=65536
+MemoryMax=2G
+CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target

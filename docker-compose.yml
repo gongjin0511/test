@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  trader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: okx_ai_trader
+    restart: unless-stopped
+    environment:
+      # 从.env文件加载环境变量
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OKX_API_KEY=${OKX_API_KEY}
+      - OKX_SECRET_KEY=${OKX_SECRET_KEY}
+      - OKX_PASSPHRASE=${OKX_PASSPHRASE}
+      - OKX_TESTNET=${OKX_TESTNET:-true}
+    volumes:
+      # 持久化数据库和日志
+      - ./data:/app/data
+      - ./logs:/app/logs
+      # 配置文件（可选）
+      - ./config:/app/config
+    networks:
+      - trader_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  trader_network:
+    driver: bridge
+
+volumes:
+  data:
+  logs:

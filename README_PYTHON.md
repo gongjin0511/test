@@ -94,11 +94,79 @@ src/
 ├── dynamic_prompt.py            # ✨ Dynamic prompt evolution
 ├── backtesting.py               # ✨ LLM-powered backtesting engine
 ├── pattern_recognition.py       # ✨ LLM pattern discovery
+├── news_analyzer.py             # 📰 News and sentiment analysis
+├── automated_trader.py          # 🤖 Fully automated trading system
 ├── prompts.py                   # System prompts
 └── main.py                      # Entry point
+
+scripts/
+├── start_automated_trader.sh    # 🤖 Startup script
+└── trader.service               # 🤖 Systemd service file
+
+docker-compose.yml               # 🤖 Docker deployment
+Dockerfile                       # 🤖 Docker image
 ```
 
 ✨ = New advanced features
+🤖 = Automation features
+📰 = News analysis features
+
+## 🤖 全自动化运行
+
+系统支持完全自动化运行，无需人工干预。
+
+### 快速启动
+
+```bash
+# 使用启动脚本
+chmod +x scripts/start_automated_trader.sh
+./scripts/start_automated_trader.sh
+
+# 或直接运行
+python -m src.automated_trader
+```
+
+### Docker部署（推荐）
+
+```bash
+# 构建并启动
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f trader
+
+# 停止系统
+docker-compose down
+```
+
+### 自动化特性
+
+- ✅ **健康监控**: 自动检测系统状态
+- ✅ **自动恢复**: 错误时自动重启
+- ✅ **优雅关闭**: 安全停止，保存数据
+- ✅ **7x24运行**: 无人值守连续运行
+- ✅ **日志管理**: 自动分割和归档
+
+## 📰 新闻和情绪分析
+
+基于LLM的市场新闻和情绪分析系统。
+
+### 分析功能
+
+- **情绪评分**: -1.0（极度看空）到 +1.0（极度看涨）
+- **趋势检测**: 识别情绪改善/下降/稳定
+- **突发新闻**: 自动识别市场移动事件
+- **主题提取**: 识别市场讨论热点
+- **风险识别**: AI分析风险因素和机会
+- **实时更新**: 每5分钟更新新闻
+
+### 决策集成
+
+AI决策时自动考虑：
+- 当前市场情绪和趋势
+- 重大新闻事件
+- 识别的风险因素和机会
+- 新闻与技术分析的结合
 
 ## 🔑 Key Features
 
